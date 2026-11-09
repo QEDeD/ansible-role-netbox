@@ -64,8 +64,8 @@ provisioner:
         # Variables required for NetBox to connect to the Postgres database
         netbox_database_hostname: "{{ postgres_connection_hostname }}"
         netbox_database_port: "{{ postgres_connection_port }}"
-        netbox_database_username: my_database_username
-        netbox_database_password: my_database_password
+        netbox_database_username: /#@my_database_username?%
+        netbox_database_password: /#@my_database_password?%
         netbox_database_name: netbox
         netbox_systemd_required_services_list_auto: |
           {{
