@@ -16,11 +16,13 @@
     - name: Install NetBox
       ansible.builtin.include_tasks: "{{ role_path }}/tasks/install.yml"
 
+# The uninstallation tasks remove whatever is disabled: NetBox as a whole, or
+# only its housekeeping service.
 - name: Perform NetBox uninstallation tasks
-  when: not netbox_enabled | bool
+  when: not (netbox_enabled | bool and netbox_housekeeping_script_enabled | bool)
   tags:
     - setup-all
     - setup-netbox
   block:
-    - name: Uninstall NetBox
+    - name: Uninstall NetBox or its housekeeping service
       ansible.builtin.include_tasks: "{{ role_path }}/tasks/uninstall.yml"

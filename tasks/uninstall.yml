@@ -4,62 +4,80 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 ---
-- name: Check existence of NetBox systemd service
-  ansible.builtin.stat:
-    path: "{{ devture_systemd_docker_base_systemd_path }}/{{ netbox_identifier }}.service"
-  register: netbox_service_stat
-
-- name: Uninstall netbox systemd services and files
-  when: netbox_service_stat.stat.exists | bool
+# Before `netbox_housekeeping_script_enabled` existed, the housekeeping service
+# was always installed, so it can be present while housekeeping is disabled.
+- name: Uninstall NetBox housekeeping if NetBox housekeeping is disabled or NetBox is disabled as a whole
+  when: not netbox_housekeeping_script_enabled | bool or not netbox_enabled | bool
   block:
-    - name: Ensure NetBox systemd services are stopped
-      ansible.builtin.service:
-        name: "{{ item.name }}"
-        state: stopped
-        enabled: false
-        daemon_reload: true
-      with_items:
-        - name: "{{ netbox_identifier }}"
-          when: true
-        - name: "{{ netbox_identifier }}-worker"
-          when: true
-        - name: "{{ netbox_identifier }}-housekeeping"
-          when: "{{ netbox_housekeeping_script_enabled }}"
-      when: item.when | bool
+    - name: Check existence of NetBox housekeeping systemd service
+      ansible.builtin.stat:
+        path: "{{ devture_systemd_docker_base_systemd_path }}/{{ netbox_identifier }}-housekeeping.service"
+      register: netbox_housekeeping_service_stat
 
-    - name: Ensure NetBox systemd services do not exist
-      ansible.builtin.file:
-        path: "{{ devture_systemd_docker_base_systemd_path }}/{{ item.name }}.service"
-        state: absent
-      with_items:
-        - name: "{{ netbox_identifier }}"
-          when: true
-        - name: "{{ netbox_identifier }}-worker"
-          when: true
-        - name: "{{ netbox_identifier }}-housekeeping"
-          when: "{{ netbox_housekeeping_script_enabled }}"
-      when: item.when | bool
-
-    - name: Ensure NetBox container network does not exist
-      when: netbox_container_network_deletion_enabled
+    - name: Uninstall NetBox housekeeping when its systemd service exists
+      when: netbox_housekeeping_service_stat.stat.exists | bool
       block:
-        - name: Ensure NetBox container network does not exist via community.docker.docker_network
-          when: devture_systemd_docker_base_container_network_creation_method == 'ansible-module'
-          community.docker.docker_network:
-            name: "{{ netbox_container_network }}"
+        - name: Ensure NetBox housekeeping systemd service is stopped
+          ansible.builtin.service:
+            name: "{{ netbox_identifier }}-housekeeping"
+            state: stopped
+            enabled: false
+            daemon_reload: true
+
+        - name: Ensure NetBox housekeeping systemd service does not exist
+          ansible.builtin.file:
+            path: "{{ devture_systemd_docker_base_systemd_path }}/{{ netbox_identifier }}-housekeeping.service"
             state: absent
-          register: netbox_network_deletion_result
 
-        - name: Ensure NetBox container network does not exist via ansible.builtin.command
-          when: devture_systemd_docker_base_container_network_creation_method == 'command'
-          ansible.builtin.command:
-            cmd: >-
-              {{ devture_systemd_docker_base_host_command_docker }} network rm
-              {{ netbox_container_network }}
-          register: netbox_network_deletion_result
-          changed_when: netbox_container_network in netbox_network_deletion_result.stdout
+- name: Uninstall NetBox if NetBox is disabled
+  when: not netbox_enabled | bool
+  block:
+    - name: Check existence of NetBox systemd service
+      ansible.builtin.stat:
+        path: "{{ devture_systemd_docker_base_systemd_path }}/{{ netbox_identifier }}.service"
+      register: netbox_service_stat
 
-    - name: Ensure NetBox path does not exist
-      ansible.builtin.file:
-        path: "{{ netbox_base_path }}"
-        state: absent
+    - name: Uninstall netbox systemd services and files
+      when: netbox_service_stat.stat.exists | bool
+      block:
+        - name: Ensure NetBox systemd services are stopped
+          ansible.builtin.service:
+            name: "{{ item }}"
+            state: stopped
+            enabled: false
+            daemon_reload: true
+          with_items:
+            - "{{ netbox_identifier }}"
+            - "{{ netbox_identifier }}-worker"
+
+        - name: Ensure NetBox systemd services do not exist
+          ansible.builtin.file:
+            path: "{{ devture_systemd_docker_base_systemd_path }}/{{ item }}.service"
+            state: absent
+          with_items:
+            - "{{ netbox_identifier }}"
+            - "{{ netbox_identifier }}-worker"
+
+        - name: Ensure NetBox container network does not exist
+          when: netbox_container_network_deletion_enabled
+          block:
+            - name: Ensure NetBox container network does not exist via community.docker.docker_network
+              when: devture_systemd_docker_base_container_network_creation_method == 'ansible-module'
+              community.docker.docker_network:
+                name: "{{ netbox_container_network }}"
+                state: absent
+              register: netbox_network_deletion_result
+
+            - name: Ensure NetBox container network does not exist via ansible.builtin.command
+              when: devture_systemd_docker_base_container_network_creation_method == 'command'
+              ansible.builtin.command:
+                cmd: >-
+                  {{ devture_systemd_docker_base_host_command_docker }} network rm
+                  {{ netbox_container_network }}
+              register: netbox_network_deletion_result
+              changed_when: netbox_container_network in netbox_network_deletion_result.stdout
+
+        - name: Ensure NetBox path does not exist
+          ansible.builtin.file:
+            path: "{{ netbox_base_path }}"
+            state: absent
