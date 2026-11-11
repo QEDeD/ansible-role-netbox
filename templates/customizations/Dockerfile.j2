@@ -9,9 +9,17 @@ FROM {{ netbox_container_image }}
 RUN apt update && apt install -y wget
 
 {% if netbox_container_image_customizations_keycloak_sso_expiration_middleware_enabled %}
+{% if netbox_container_image_python_site_packages_path %}
 RUN wget \
   {{ netbox_container_image_customizations_keycloak_sso_expiration_middleware_download_url }} \
   -O {{ netbox_container_image_python_site_packages_path }}/keycloak_sso_expiration_middleware.py
+{% else %}
+RUN site_packages_path="$(/opt/netbox/venv/bin/python3 -c 'import sysconfig; print(sysconfig.get_path("purelib"))')" \
+  && test -n "$site_packages_path" \
+  && wget \
+    {{ netbox_container_image_customizations_keycloak_sso_expiration_middleware_download_url }} \
+    -O "$site_packages_path/keycloak_sso_expiration_middleware.py"
+{% endif %}
 
 RUN sed \
   --in-place \

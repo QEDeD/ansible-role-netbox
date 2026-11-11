@@ -33,8 +33,12 @@ netbox_hostname: ""
 # This value must either be `/` or not end with a slash (e.g. `/netbox`).
 netbox_path_prefix: /
 
-# Specifies the Python site-packages path in the container.
-netbox_container_image_python_site_packages_path: /opt/netbox/venv/lib/python3.11/site-packages
+# Specifies the Python site-packages path in the container, where the container
+# image customizations below install Python modules. When empty, the path is taken
+# from the image's own Python environment while the customized image is built.
+# Steps in `netbox_container_image_customizations_dockerfile_body_custom` that use
+# this variable get an empty value unless you set it.
+netbox_container_image_python_site_packages_path: ""
 
 # netbox_container_image_customizations_enabled controls whether a customized NetBox image will be built.
 #
