@@ -24,3 +24,31 @@
   block:
     - name: Uninstall NetBox
       ansible.builtin.include_tasks: "{{ role_path }}/tasks/uninstall.yml"
+
+# Since NetBox v4.4.0, housekeeping runs as a daily system job in the NetBox worker.
+# Older versions of this role set up a separate housekeeping service, which runs a
+# script that newer NetBox images no longer contain. Remove it where it still exists.
+- name: Perform NetBox housekeeping service removal tasks
+  tags:
+    - setup-all
+    - setup-netbox
+    - install-all
+    - install-netbox
+  block:
+    - name: Check existence of the obsolete NetBox housekeeping systemd service
+      ansible.builtin.stat:
+        path: "{{ devture_systemd_docker_base_systemd_path }}/{{ netbox_identifier }}-housekeeping.service"
+      register: netbox_housekeeping_service_stat
+
+    - name: Ensure the obsolete NetBox housekeeping systemd service is stopped and disabled
+      when: netbox_housekeeping_service_stat.stat.exists | bool
+      ansible.builtin.service:
+        name: "{{ netbox_identifier }}-housekeeping"
+        state: stopped
+        enabled: false
+        daemon_reload: true
+
+    - name: Ensure the obsolete NetBox housekeeping systemd service does not exist
+      ansible.builtin.file:
+        path: "{{ devture_systemd_docker_base_systemd_path }}/{{ netbox_identifier }}-housekeeping.service"
+        state: absent

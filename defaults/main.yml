@@ -289,10 +289,6 @@ netbox_redis_username: ""
 netbox_redis_password: ""
 netbox_redis_database: 0
 
-# Control if the service to run housekeeping script is installed
-# This variable can be useful when installing NetBox older than 4.4.0
-netbox_housekeeping_script_enabled: false
-
 # Specify the timezone
 netbox_environment_variables_tz: UTC
 
@@ -316,9 +312,6 @@ netbox_environment_variable_webhooks_enabled: true
 
 # Controls the `GRAPHQL_ENABLED` environment variable
 netbox_environment_variable_graphql_enabled: true
-
-# Controls the `HOUSEKEEPING_INTERVAL` environment variable
-netbox_environment_variable_housekeeping_interval: 86400
 
 # Controls the `REDIS_INSECURE_SKIP_TLS_VERIFY` environment variable
 netbox_environment_variable_redis_insecure_skip_tls_verify: false

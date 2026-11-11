@@ -50,9 +50,3 @@
       ansible.builtin.systemd_service:
         name: netbox-worker.service
         state: started
-
-    - name: Ensure NetBox housekeeping systemd service is started
-      when: netbox_housekeeping_script_enabled | bool
-      ansible.builtin.systemd_service:
-        name: netbox-housekeeping.service
-        state: started

@@ -23,8 +23,6 @@
           when: true
         - name: "{{ netbox_identifier }}-worker"
           when: true
-        - name: "{{ netbox_identifier }}-housekeeping"
-          when: "{{ netbox_housekeeping_script_enabled }}"
       when: item.when | bool
 
     - name: Ensure NetBox systemd services do not exist
@@ -36,8 +34,6 @@
           when: true
         - name: "{{ netbox_identifier }}-worker"
           when: true
-        - name: "{{ netbox_identifier }}-housekeeping"
-          when: "{{ netbox_housekeeping_script_enabled }}"
       when: item.when | bool
 
     - name: Ensure NetBox container network does not exist

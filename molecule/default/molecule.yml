@@ -46,7 +46,6 @@ provisioner:
         netbox_hostname: localhost
         netbox_container_labels_traefik_enabled: false
         netbox_container_http_host_bind_port: 8080
-        netbox_housekeeping_script_enabled: false
         # Turned on so that `verify.yml` has one setting whose effect it can
         # observe from outside the container: with this off, /metrics is a 404,
         # and only a NetBox that was handed this role's environment file serves
